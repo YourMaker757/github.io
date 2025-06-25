@@ -2311,139 +2311,160 @@ document.addEventListener('DOMContentLoaded', function() {
             // Handle form submission
             document.getElementById('order-form').onsubmit = function(e) {
                 e.preventDefault();
-            
-            const name = document.getElementById('customer-name').value;
-            const phone = document.getElementById('customer-phone').value;
-            const address = document.getElementById('customer-address').value;
+                
+                const name = document.getElementById('customer-name').value;
+                const phone = document.getElementById('customer-phone').value;
+                const address = document.getElementById('customer-address').value;
 
-            if (!name || !phone || !address) {
-                alert('Please fill in all fields');
-                return;
-            }
-
-            // Calculate total
-            const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-            const deliveryFee = 5.00;
-            const total = subtotal + deliveryFee;
-
-            // Format order details
-            const orderDetails = cart.map(item => 
-                `${item.name} (${item.optionText})`
-            ).join('\n');
-
-            const orderNumber = Math.floor(Math.random() * 10000);
-            
-            const message = `New Order #${orderNumber}\n\n` +
-                `Customer: ${name}\n` +
-                `Phone: ${phone}\n` +
-                `Address: ${address}\n\n` +
-                `Items:\n${orderDetails}\n\n` +
-                `Subtotal: $${subtotal.toFixed(2)}\n` +
-                `Delivery: $${deliveryFee.toFixed(2)}\n` +
-                `Total: $${total.toFixed(2)}`;
-
-            console.log('Message formatted:', message);
-
-            // Hide the form and show the summary
-            document.getElementById('order-form').classList.add('hidden');
-            document.getElementById('order-summary').classList.remove('hidden');
-            document.getElementById('order-details').textContent = message;
-
-            // Set up SMS link
-            const smsLink = document.getElementById('sms-link');
-            const phoneNumber = '8326079373';
-            smsLink.href = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
-            
-            // Also create a backup link for iOS
-            const iosSmsLink = document.createElement('a');
-            iosSmsLink.href = `sms://${phoneNumber}/&body=${encodeURIComponent(message)}`;
-            document.body.appendChild(iosSmsLink);
-
-            // Handle SMS link click
-            smsLink.onclick = function(e) {
-                e.preventDefault();
-                try {
-                    // Try iOS format first
-                    iosSmsLink.click();
-                } catch (e1) {
-                    try {
-                        // Try standard format
-                        window.location.href = smsLink.href;
-                    } catch (e2) {
-                        // If both fail, copy to clipboard and show instructions
-                        navigator.clipboard.writeText(message).then(() => {
-                            alert(`Message copied to clipboard!\n\nPlease send it to: ${phoneNumber}`);
-                        });
-                    }
+                if (!name || !phone || !address) {
+                    alert('Please fill in all fields');
+                    return;
                 }
 
-                // Clear cart after attempting to send
-                localStorage.setItem('cart', '[]');
-                updateCartDisplay();
-                updateCartCount();
-                document.getElementById('cart-sidebar').classList.add('translate-x-full');
-                document.getElementById('order-modal').classList.add('hidden');
+                // Calculate total
+                const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+                const deliveryFee = 5.00;
+                const total = subtotal + deliveryFee;
+
+                // Format order details
+                const orderDetails = cart.map(item => 
+                    `${item.name} (${item.optionText})`
+                ).join('\n');
+
+                const orderNumber = Math.floor(Math.random() * 10000);
+                
+                const message = `New Order #${orderNumber}\n\n` +
+                    `Customer: ${name}\n` +
+                    `Phone: ${phone}\n` +
+                    `Address: ${address}\n\n` +
+                    `Items:\n${orderDetails}\n\n` +
+                    `Subtotal: $${subtotal.toFixed(2)}\n` +
+                    `Delivery: $${deliveryFee.toFixed(2)}\n` +
+                    `Total: $${total.toFixed(2)}`;
+
+                console.log('Message formatted:', message);
+
+                // Hide the form and show the summary
+                document.getElementById('order-form').classList.add('hidden');
+                document.getElementById('order-summary').classList.remove('hidden');
+                document.getElementById('order-details').textContent = message;
+
+                // Set up SMS link
+                const smsLink = document.getElementById('sms-link');
+                const phoneNumber = '8326079373';
+                smsLink.href = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+                
+                // Also create a backup link for iOS
+                const iosSmsLink = document.createElement('a');
+                iosSmsLink.href = `sms://${phoneNumber}/&body=${encodeURIComponent(message)}`;
+                document.body.appendChild(iosSmsLink);
+
+                // Handle SMS link click
+                smsLink.onclick = function(e) {
+                    e.preventDefault();
+                    try {
+                        // Try iOS format first
+                        iosSmsLink.click();
+                    } catch (e1) {
+                        try {
+                            // Try standard format
+                            window.location.href = smsLink.href;
+                        } catch (e2) {
+                            // If both fail, copy to clipboard and show instructions
+                            navigator.clipboard.writeText(message).then(() => {
+                                alert(`Message copied to clipboard!\n\nPlease send it to: ${phoneNumber}`);
+                            });
+                        }
+                    }
+
+                    // Clear cart after attempting to send
+                    localStorage.setItem('cart', '[]');
+                    updateCartDisplay();
+                    updateCartCount();
+                    document.getElementById('cart-sidebar').classList.add('translate-x-full');
+                    document.getElementById('order-modal').classList.add('hidden');
+                };
             };
-        };
         } catch (error) {
             console.error('Error in submitOrder:', error);
             alert('There was an error processing your order. Please try again.');
         }
     }
-    }
 
-    // Add click listeners to all add-to-cart buttons
-    document.querySelectorAll('.add-to-cart').forEach(button => {
-        button.addEventListener('click', function() {
-            const productCard = this.closest('.product-card');
-            if (!productCard) return;
+    // Initialize cart and add event listeners when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize empty cart if none exists
+        if (!localStorage.getItem('cart')) {
+            localStorage.setItem('cart', '[]');
+        }
 
-            const quantitySelect = productCard.querySelector('.flower-quantity, .product-quantity');
-            if (!quantitySelect) return;
+        // Update cart display initially
+        updateCartDisplay();
+        updateCartCount();
 
-            const price = getPriceFromOption(quantitySelect);
-            if (isNaN(price) || price <= 0) {
-                console.error('Invalid price:', quantitySelect.value);
-                return;
-            }
+        // Add click listeners to all add-to-cart buttons
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', function() {
+                const productCard = this.closest('.product-card');
+                if (!productCard) return;
 
-            const product = {
-                id: productCard.dataset.productId || productCard.querySelector('h3').textContent.toLowerCase().replace(/\s+/g, '-'),
-                name: productCard.querySelector('h3').textContent,
-                price: price,
-                quantity: 1,
-                selectedOption: quantitySelect.value,
-                optionText: quantitySelect.options[quantitySelect.selectedIndex].text
-            };
+                const quantitySelect = productCard.querySelector('.flower-quantity, .product-quantity');
+                if (!quantitySelect) return;
 
-            // Get current cart
-            const cart = JSON.parse(localStorage.getItem('cart'));
+                const selectedOption = quantitySelect.options[quantitySelect.selectedIndex];
+                if (!selectedOption) return;
 
-            // Check if product already exists in cart with same option
-            const existingProduct = cart.find(item => 
-                item.id === product.id && 
-                item.selectedOption === product.selectedOption
-            );
+                const price = getPriceFromOption(quantitySelect);
+                const quantity = getQuantityFromOption(quantitySelect);
 
-            if (existingProduct) {
-                existingProduct.quantity = product.quantity;
-            } else {
-                cart.push(product);
-            }
+                if (isNaN(price) || price <= 0) {
+                    console.error('Invalid price:', quantitySelect.value);
+                    return;
+                }
 
-            // Save updated cart
-            localStorage.setItem('cart', JSON.stringify(cart));
+                const product = {
+                    id: productCard.dataset.productId || productCard.querySelector('h3').textContent.toLowerCase().replace(/\s+/g, '-'),
+                    name: productCard.querySelector('h3').textContent,
+                    price: price,
+                    quantity: quantity,
+                    selectedOption: quantitySelect.value,
+                    optionText: selectedOption.textContent
+                };
 
-            // Update cart display
-            updateCartDisplay();
-            updateCartCount();
+                console.log('Adding product to cart:', product);
 
-            // Show feedback to user
-            const notification = document.createElement('div');
-            notification.textContent = 'Item added to cart!';
-            notification.className = 'fixed top-4 right-4 bg-primary text-white px-4 py-2 rounded-lg shadow-lg z-50';
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 2000);
+                // Get current cart
+                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+                // Check if product already exists in cart with same option
+                const existingProduct = cart.find(item => 
+                    item.id === product.id && 
+                    item.selectedOption === product.selectedOption
+                );
+
+                if (existingProduct) {
+                    existingProduct.quantity = product.quantity;
+                    console.log('Updated existing product quantity:', existingProduct);
+                } else {
+                    cart.push(product);
+                    console.log('Added new product to cart');
+                }
+
+                // Save updated cart
+                localStorage.setItem('cart', JSON.stringify(cart));
+                console.log('Cart saved:', cart);
+
+                // Update cart display
+                updateCartDisplay();
+                updateCartCount();
+
+                // Show feedback to user
+                const notification = document.createElement('div');
+                notification.textContent = 'Item added to cart!';
+                notification.className = 'fixed top-4 right-4 bg-primary text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 2000);
+            });
         });
     });
 });
