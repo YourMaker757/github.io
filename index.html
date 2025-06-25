@@ -2234,10 +2234,8 @@ function removeFromCart(itemId, selectedOption) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize cart in localStorage if it doesn't exist
-    if (!localStorage.getItem('cart')) {
-        localStorage.setItem('cart', JSON.stringify([]));
-    }
+    // Always start with a fresh cart
+    localStorage.setItem('cart', JSON.stringify([]));
     
     // Initial cart update
     updateCartDisplay();
@@ -2305,36 +2303,26 @@ document.addEventListener('DOMContentLoaded', function() {
             `Delivery: $${deliveryFee.toFixed(2)}\n` +
             `Total: $${total.toFixed(2)}`;
 
-        // Send text message using the business phone number
-        const businessPhone = '8326079373'; // Remove hyphens for compatibility
+        // Create a hidden form to submit the SMS
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = 'sms:8326079373';
+        form.target = '_blank';
         
-        // Try different SMS URI schemes for better compatibility
-        const textUrls = [
-            `sms:+1${businessPhone}?body=${encodeURIComponent(message)}`,
-            `sms:${businessPhone}?body=${encodeURIComponent(message)}`,
-            `sms:+1${businessPhone}`,
-            `tel:+1${businessPhone}`
-        ];
-
-        // Try opening each URL until one works
-        let opened = false;
-        for (const url of textUrls) {
-            try {
-                const windowRef = window.open(url, '_blank');
-                if (windowRef) {
-                    opened = true;
-                    break;
-                }
-            } catch (e) {
-                console.error('Failed to open:', url, e);
-            }
-        }
-
-        // If none of the automatic methods worked, show manual instructions
-        if (!opened) {
-            const manualInstructions = `Please send the following message to ${businessPhone}:\n\n${message}`;
-            alert(manualInstructions);
-        }
+        // Add the message as a hidden input
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'body';
+        input.value = message;
+        form.appendChild(input);
+        
+        // Add the form to the document and submit it
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+        
+        // Show the order details in case SMS doesn't work
+        alert(`Order submitted! If SMS doesn't open automatically, please text this order to 832-607-9373:\n\n${message}`);
 
         // Clear cart after successful order
         localStorage.setItem('cart', '[]');
