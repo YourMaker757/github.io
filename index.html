@@ -2105,84 +2105,157 @@ btn.classList.add('text-gray-300');
 }
 });
 </script>
+
+<!-- Cart Functionality Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize cart in localStorage if it doesn't exist
+    if (!localStorage.getItem('cart')) {
+        localStorage.setItem('cart', JSON.stringify([]));
+    }
+
+    // Function to get price from selected option
+    function getPriceFromOption(select) {
+        const selectedOption = select.options[select.selectedIndex];
+        return parseFloat(selectedOption.textContent.match(/\$([\d.]+)/)[1]);
+    }
+
+    // Function to get quantity from selected option
+    function getQuantityFromOption(select) {
+        const selectedOption = select.options[select.selectedIndex];
+        return selectedOption.value;
+    }
+
+    // Add click listeners to all add-to-cart buttons
+    document.querySelectorAll('.add-to-cart').forEach(button => {
+        button.addEventListener('click', function() {
+            const productCard = this.closest('.product-card');
+            if (!productCard) return;
+
+            const quantitySelect = productCard.querySelector('.flower-quantity, .product-quantity');
+            if (!quantitySelect) return;
+
+            const product = {
+                id: productCard.dataset.productId || productCard.querySelector('h3').textContent.toLowerCase().replace(/\s+/g, '-'),
+                name: productCard.querySelector('h3').textContent,
+                price: getPriceFromOption(quantitySelect),
+                quantity: getQuantityFromOption(quantitySelect),
+                selectedOption: quantitySelect.value
+            };
+
+            // Get current cart
+            const cart = JSON.parse(localStorage.getItem('cart'));
+
+            // Check if product already exists in cart with same option
+            const existingProduct = cart.find(item => 
+                item.id === product.id && 
+                item.selectedOption === product.selectedOption
+            );
+
+            if (existingProduct) {
+                existingProduct.quantity = product.quantity;
+            } else {
+                cart.push(product);
+            }
+
+            // Save updated cart
+            localStorage.setItem('cart', JSON.stringify(cart));
+
+            // Update cart display
+            updateCartDisplay();
+            updateCartCount();
+
+            // Show feedback to user
+            const notification = document.createElement('div');
+            notification.textContent = 'Item added to cart!';
+            notification.className = 'fixed top-4 right-4 bg-primary text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 2000);
+        });
+    });
+});
+</script>
+
 <!-- Store Hours Script -->
 <script id="store-hours-script">
 document.addEventListener('DOMContentLoaded', function() {
-// Check if store is open based on current time and settings
-window.isStoreOpen = function() {
-// Get settings from localStorage or use defaults
-const savedSettings = localStorage.getItem('storeSettings');
-let storeOpen = true; // Default to open
-let openingTime = '09:00';
-let closingTime = '22:00';
-if (savedSettings) {
-const settings = JSON.parse(savedSettings);
-storeOpen = settings.storeOpen;
-openingTime = settings.openingTime;
-closingTime = settings.closingTime;
-}
-// If manually set to closed, return false
-if (!storeOpen) {
-return false;
-}
-// Check if current time is within operating hours
-const now = new Date();
-const currentHours = now.getHours();
-const currentMinutes = now.getMinutes();
-const currentTime = currentHours * 60 + currentMinutes; // Convert to minutes
-const [openHours, openMinutes] = openingTime.split(':').map(Number);
-const [closeHours, closeMinutes] = closingTime.split(':').map(Number);
-const openTimeInMinutes = openHours * 60 + openMinutes;
-const closeTimeInMinutes = closeHours * 60 + closeMinutes;
-return currentTime >= openTimeInMinutes && currentTime <= closeTimeInMinutes;
-};
-// Check store hours and update UI
-window.checkStoreHours = function() {
-const storeStatus = document.getElementById('store-status');
-const statusText = document.getElementById('status-text');
-// Get settings from localStorage or use defaults
-const savedSettings = localStorage.getItem('storeSettings');
-let storeOpen = true; // Default to open
-let openingTime = '09:00';
-let closingTime = '22:00';
-if (savedSettings) {
-const settings = JSON.parse(savedSettings);
-storeOpen = settings.storeOpen;
-openingTime = settings.openingTime;
-closingTime = settings.closingTime;
-}
-// If manually set to closed
-if (!storeOpen) {
-storeStatus.className = 'status-closed text-white px-3 py-1 rounded-full text-sm font-medium flex items-center';
-statusText.textContent = 'We\'re Closed';
-return;
-}
-// Check if current time is within operating hours
-const now = new Date();
-const currentHours = now.getHours();
-const currentMinutes = now.getMinutes();
-const currentTime = currentHours * 60 + currentMinutes; // Convert to minutes
-const [openHours, openMinutes] = openingTime.split(':').map(Number);
-const [closeHours, closeMinutes] = closingTime.split(':').map(Number);
-const openTimeInMinutes = openHours * 60 + openMinutes;
-const closeTimeInMinutes = closeHours * 60 + closeMinutes;
-// Check if store is open
-if (currentTime >= openTimeInMinutes && currentTime <= closeTimeInMinutes) {
-// Check if closing soon (within 60 minutes of closing)
-if (closeTimeInMinutes - currentTime <= 60) {
-storeStatus.className = 'status-closing text-white px-3 py-1 rounded-full text-sm font-medium flex items-center';
-statusText.textContent = 'Closing Soon';
-} else {
-storeStatus.className = 'status-open text-white px-3 py-1 rounded-full text-sm font-medium flex items-center';
-statusText.textContent = 'We\'re Open';
-}
-} else {
-storeStatus.className = 'status-closed text-white px-3 py-1 rounded-full text-sm font-medium flex items-center';
-statusText.textContent = 'We\'re Closed';
-}
-};
-// Check store hours every minute
-setInterval(checkStoreHours, 60000);
+    // Check if store is open based on current time and settings
+    window.isStoreOpen = function() {
+        // Get settings from localStorage or use defaults
+        const savedSettings = localStorage.getItem('storeSettings');
+        let storeOpen = true; // Default to open
+        let openingTime = '09:00';
+        let closingTime = '22:00';
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            storeOpen = settings.storeOpen;
+            openingTime = settings.openingTime;
+            closingTime = settings.closingTime;
+        }
+        // If manually set to closed, return false
+        if (!storeOpen) {
+            return false;
+        }
+        // Check if current time is within operating hours
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentTime = currentHours * 60 + currentMinutes; // Convert to minutes
+        const [openHours, openMinutes] = openingTime.split(':').map(Number);
+        const [closeHours, closeMinutes] = closingTime.split(':').map(Number);
+        const openTimeInMinutes = openHours * 60 + openMinutes;
+        const closeTimeInMinutes = closeHours * 60 + closeMinutes;
+        return currentTime >= openTimeInMinutes && currentTime <= closeTimeInMinutes;
+    };
+    // Check store hours and update UI
+    window.checkStoreHours = function() {
+        const storeStatus = document.getElementById('store-status');
+        const statusText = document.getElementById('status-text');
+        // Get settings from localStorage or use defaults
+        const savedSettings = localStorage.getItem('storeSettings');
+        let storeOpen = true; // Default to open
+        let openingTime = '09:00';
+        let closingTime = '22:00';
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            storeOpen = settings.storeOpen;
+            openingTime = settings.openingTime;
+            closingTime = settings.closingTime;
+        }
+        // If manually set to closed
+        if (!storeOpen) {
+            storeStatus.className = 'status-closed text-white px-3 py-1 rounded-full text-sm font-medium flex items-center';
+            statusText.textContent = 'We\'re Closed';
+            return;
+        }
+        // Check if current time is within operating hours
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentTime = currentHours * 60 + currentMinutes; // Convert to minutes
+        const [openHours, openMinutes] = openingTime.split(':').map(Number);
+        const [closeHours, closeMinutes] = closingTime.split(':').map(Number);
+        const openTimeInMinutes = openHours * 60 + openMinutes;
+        const closeTimeInMinutes = closeHours * 60 + closeMinutes;
+        // Check if store is open
+        if (currentTime >= openTimeInMinutes && currentTime <= closeTimeInMinutes) {
+            // Check if closing soon (within 60 minutes of closing)
+            if (closeTimeInMinutes - currentTime <= 60) {
+                storeStatus.className = 'status-closing text-white px-3 py-1 rounded-full text-sm font-medium flex items-center';
+                statusText.textContent = 'Closing Soon';
+            } else {
+                storeStatus.className = 'status-open text-white px-3 py-1 rounded-full text-sm font-medium flex items-center';
+                statusText.textContent = 'We\'re Open';
+            }
+        } else {
+            storeStatus.className = 'status-closed text-white px-3 py-1 rounded-full text-sm font-medium flex items-center';
+            statusText.textContent = 'We\'re Closed';
+        }
+    };
+    // Check store hours every minute
+    setInterval(checkStoreHours, 60000);
+    // Run initial check
+    checkStoreHours();
 });
 </script>
 </body>
