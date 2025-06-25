@@ -139,6 +139,38 @@ background: #555;
     <span id="cart-count">0</span>
 </button>
 
+<!-- Order Modal -->
+<div id="order-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl w-96">
+        <h2 class="text-xl font-bold mb-4">Complete Your Order</h2>
+        <form id="order-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Name</label>
+                <input type="text" id="customer-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                <input type="tel" id="customer-phone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Delivery Address</label>
+                <textarea id="customer-address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary" rows="2" required></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('order-modal').classList.add('hidden')" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">Cancel</button>
+                <button type="submit" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90">Submit Order</button>
+            </div>
+        </form>
+        <div id="order-summary" class="hidden mt-4 p-4 bg-gray-50 rounded-md">
+            <h3 class="font-bold mb-2">Order Summary</h3>
+            <div id="order-details" class="text-sm"></div>
+            <div class="mt-4">
+                <a id="sms-link" href="#" class="inline-block bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90 text-center w-full">Send Order via SMS</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Age Verification Gate -->
 <div id="age-verification" class="age-verification fixed inset-0 z-50 flex items-center justify-center p-4" style="background: url('https://res.cloudinary.com/dvxmvlykb/image/upload/v1750525696/IMG_20250618_084534_hnkjaj_c_pad_w_1920_h_1080_qn9w9n.jpg') no-repeat center center fixed; background-size: cover;">
 <div class="bg-black bg-opacity-95 backdrop-blur-lg rounded-lg max-w-md w-full p-8 text-center">
@@ -2267,10 +2299,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to submit order and send text message
     function submitOrder() {
         try {
-            console.log('Starting order submission...');
             const cart = JSON.parse(localStorage.getItem('cart') || '[]');
             if (cart.length === 0) {
                 alert('Your cart is empty!');
+                return;
+            }
+
+            // Show the order modal
+            document.getElementById('order-modal').classList.remove('hidden');
+
+            // Handle form submission
+            document.getElementById('order-form').onsubmit = function(e) {
+                e.preventDefault();
+            
+            const name = document.getElementById('customer-name').value;
+            const phone = document.getElementById('customer-phone').value;
+            const address = document.getElementById('customer-address').value;
+
+            if (!name || !phone || !address) {
+                alert('Please fill in all fields');
                 return;
             }
 
@@ -2279,19 +2326,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const deliveryFee = 5.00;
             const total = subtotal + deliveryFee;
 
-            // Get customer info
-            const name = prompt('Please enter your name:');
-            if (!name) return;
-
-            const phone = prompt('Please enter your phone number:');
-            if (!phone) return;
-
-            const address = prompt('Please enter your delivery address:');
-            if (!address) return;
-
-            console.log('Customer info collected...');
-
-            // Format order details for text message
+            // Format order details
             const orderDetails = cart.map(item => 
                 `${item.name} (${item.optionText})`
             ).join('\n');
@@ -2309,46 +2344,52 @@ document.addEventListener('DOMContentLoaded', function() {
 
             console.log('Message formatted:', message);
 
-            // Try multiple SMS URI schemes
+            // Hide the form and show the summary
+            document.getElementById('order-form').classList.add('hidden');
+            document.getElementById('order-summary').classList.remove('hidden');
+            document.getElementById('order-details').textContent = message;
+
+            // Set up SMS link
+            const smsLink = document.getElementById('sms-link');
             const phoneNumber = '8326079373';
-            const schemes = [
-                `sms:${phoneNumber}?body=${encodeURIComponent(message)}`,
-                `sms:+1${phoneNumber}?body=${encodeURIComponent(message)}`,
-                `sms://${phoneNumber}?body=${encodeURIComponent(message)}`,
-                `sms:${phoneNumber}`,
-                `tel:${phoneNumber}`
-            ];
-
-            let opened = false;
-            for (const scheme of schemes) {
-                try {
-                    console.log('Trying scheme:', scheme);
-                    const link = document.createElement('a');
-                    link.href = scheme;
-                    link.target = '_blank';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    opened = true;
-                    break;
-                } catch (e) {
-                    console.log('Scheme failed:', e);
-                }
-            }
-
-            // Always show the order details
-            alert(`Order Details:\n\n${message}\n\nPlease send this message to: ${phoneNumber}`);
+            smsLink.href = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
             
-            // Clear cart
-            localStorage.setItem('cart', '[]');
-            updateCartDisplay();
-            updateCartCount();
-            document.getElementById('cart-sidebar').classList.add('translate-x-full');
+            // Also create a backup link for iOS
+            const iosSmsLink = document.createElement('a');
+            iosSmsLink.href = `sms://${phoneNumber}/&body=${encodeURIComponent(message)}`;
+            document.body.appendChild(iosSmsLink);
 
+            // Handle SMS link click
+            smsLink.onclick = function(e) {
+                e.preventDefault();
+                try {
+                    // Try iOS format first
+                    iosSmsLink.click();
+                } catch (e1) {
+                    try {
+                        // Try standard format
+                        window.location.href = smsLink.href;
+                    } catch (e2) {
+                        // If both fail, copy to clipboard and show instructions
+                        navigator.clipboard.writeText(message).then(() => {
+                            alert(`Message copied to clipboard!\n\nPlease send it to: ${phoneNumber}`);
+                        });
+                    }
+                }
+
+                // Clear cart after attempting to send
+                localStorage.setItem('cart', '[]');
+                updateCartDisplay();
+                updateCartCount();
+                document.getElementById('cart-sidebar').classList.add('translate-x-full');
+                document.getElementById('order-modal').classList.add('hidden');
+            };
+        };
         } catch (error) {
             console.error('Error in submitOrder:', error);
             alert('There was an error processing your order. Please try again.');
         }
+    }
     }
 
     // Add click listeners to all add-to-cart buttons
@@ -2492,4 +2533,5 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
