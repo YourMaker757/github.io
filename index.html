@@ -2267,57 +2267,102 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Function to submit order and send text message
-    function submitOrder() {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        if (cart.length === 0) {
-            alert('Your cart is empty!');
-            return;
+    async function submitOrder() {
+        try {
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+
+            // Calculate total
+            const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            const deliveryFee = 5.00;
+            const total = subtotal + deliveryFee;
+
+            // Get customer info
+            const name = prompt('Please enter your name:');
+            if (!name) return;
+
+            const phone = prompt('Please enter your phone number:');
+            if (!phone) return;
+
+            const address = prompt('Please enter your delivery address:');
+            if (!address) return;
+
+            // Format order details for text message
+            const orderDetails = cart.map(item => 
+                `${item.name} (${item.optionText})`
+            ).join('\n');
+
+            const orderNumber = Math.floor(Math.random() * 10000);
+            
+            const message = `New Order #${orderNumber}\n\n` +
+                `Customer: ${name}\n` +
+                `Phone: ${phone}\n` +
+                `Address: ${address}\n\n` +
+                `Items:\n${orderDetails}\n\n` +
+                `Subtotal: $${subtotal.toFixed(2)}\n` +
+                `Delivery: $${deliveryFee.toFixed(2)}\n` +
+                `Total: $${total.toFixed(2)}`;
+
+            // Send text message using the business phone number
+            const businessPhone = '832-607-9373';
+            
+            // Try different SMS URI schemes for better compatibility
+            const smsSchemes = [
+                `sms:${businessPhone}?body=${encodeURIComponent(message)}`,
+                `sms:${businessPhone};body=${encodeURIComponent(message)}`,
+                `sms://${businessPhone}?body=${encodeURIComponent(message)}`,
+                `sms://${businessPhone};body=${encodeURIComponent(message)}`
+            ];
+
+            // Try each SMS scheme until one works
+            let success = false;
+            for (const scheme of smsSchemes) {
+                try {
+                    const win = window.open(scheme);
+                    if (win !== null) {
+                        success = true;
+                        break;
+                    }
+                } catch (e) {
+                    console.error('Failed to open SMS with scheme:', scheme, e);
+                }
+            }
+
+            if (!success) {
+                // Fallback to click-to-text link
+                const link = document.createElement('a');
+                link.href = `sms:${businessPhone}`;
+                link.click();
+                alert('Please copy and paste this message to your text:\n\n' + message);
+            }
+
+            // Save order to localStorage history
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            orders.push({
+                orderNumber,
+                date: new Date().toISOString(),
+                customer: { name, phone, address },
+                items: cart,
+                subtotal,
+                deliveryFee,
+                total
+            });
+            localStorage.setItem('orders', JSON.stringify(orders));
+
+            // Clear cart
+            localStorage.removeItem('cart');
+            updateCartDisplay();
+            updateCartCount();
+            document.getElementById('cart-sidebar').classList.add('translate-x-full');
+
+            alert('Order submitted successfully! We will contact you shortly to confirm your delivery.');
+        } catch (error) {
+            console.error('Order submission error:', error);
+            alert('There was an error submitting your order. Please try again or contact us directly.');
         }
-
-        // Calculate total
-        const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-        const deliveryFee = 5.00;
-        const total = subtotal + deliveryFee;
-
-        // Get customer info
-        const name = prompt('Please enter your name:');
-        if (!name) return;
-
-        const phone = prompt('Please enter your phone number:');
-        if (!phone) return;
-
-        const address = prompt('Please enter your delivery address:');
-        if (!address) return;
-
-        // Format order details for text message
-        const orderDetails = cart.map(item => 
-            `${item.name} (${item.optionText})`
-        ).join('\n');
-
-        const orderNumber = Math.floor(Math.random() * 10000);
-        
-        const message = `New Order #${orderNumber}\n\n` +
-            `Customer: ${name}\n` +
-            `Phone: ${phone}\n` +
-            `Address: ${address}\n\n` +
-            `Items:\n${orderDetails}\n\n` +
-            `Subtotal: $${subtotal.toFixed(2)}\n` +
-            `Delivery: $${deliveryFee.toFixed(2)}\n` +
-            `Total: $${total.toFixed(2)}`;
-
-        // Send text message using the business phone number
-        const businessPhone = '832-607-9373';
-        const textUrl = `sms:${businessPhone}?body=${encodeURIComponent(message)}`;
-        window.open(textUrl);
-
-        // Clear cart after successful order
-        localStorage.setItem('cart', '[]');
-        updateCartDisplay();
-        updateCartCount();
-        document.getElementById('cart-sidebar').classList.add('translate-x-full');
-
-        // Show success message
-        alert('Order submitted successfully! We will contact you shortly to confirm your delivery.');
     }
 
     // Add click listeners to all add-to-cart buttons
