@@ -2306,37 +2306,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 `Delivery: $${deliveryFee.toFixed(2)}\n` +
                 `Total: $${total.toFixed(2)}`;
 
-            // Send text message using the business phone number
+            // Create and submit SMS form
             const businessPhone = '832-607-9373';
             
-            // Try different SMS URI schemes for better compatibility
-            const smsSchemes = [
-                `sms:${businessPhone}?body=${encodeURIComponent(message)}`,
-                `sms:${businessPhone};body=${encodeURIComponent(message)}`,
-                `sms://${businessPhone}?body=${encodeURIComponent(message)}`,
-                `sms://${businessPhone};body=${encodeURIComponent(message)}`
-            ];
-
-            // Try each SMS scheme until one works
-            let success = false;
-            for (const scheme of smsSchemes) {
-                try {
-                    const win = window.open(scheme);
-                    if (win !== null) {
-                        success = true;
-                        break;
-                    }
-                } catch (e) {
-                    console.error('Failed to open SMS with scheme:', scheme, e);
-                }
-            }
-
-            if (!success) {
-                // Fallback to click-to-text link
-                const link = document.createElement('a');
-                link.href = `sms:${businessPhone}`;
-                link.click();
-                alert('Please copy and paste this message to your text:\n\n' + message);
+            // Create a hidden form for SMS
+            const form = document.createElement('form');
+            form.setAttribute('action', `sms:${businessPhone}`);
+            form.setAttribute('method', 'get');
+            form.setAttribute('enctype', 'text/plain');
+            form.setAttribute('target', '_blank');
+            
+            // Add message as body parameter
+            const bodyInput = document.createElement('input');
+            bodyInput.setAttribute('type', 'hidden');
+            bodyInput.setAttribute('name', 'body');
+            bodyInput.setAttribute('value', message);
+            form.appendChild(bodyInput);
+            
+            // Add form to document and submit
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+            
+            // Show message for manual copying as backup
+            const shouldCopy = confirm('If the SMS app didn\'t open automatically, click OK to copy the order message to your clipboard');
+            if (shouldCopy) {
+                navigator.clipboard.writeText(message).then(() => {
+                    alert('Order message copied to clipboard! Please send it to: ' + businessPhone);
+                }).catch(() => {
+                    alert('Please manually copy this message:\n\n' + message);
+                });
             }
 
             // Save order to localStorage history
@@ -2506,6 +2505,5 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
-
 
 
