@@ -2306,9 +2306,35 @@ document.addEventListener('DOMContentLoaded', function() {
             `Total: $${total.toFixed(2)}`;
 
         // Send text message using the business phone number
-        const businessPhone = '832-607-9373';
-        const textUrl = `sms:${businessPhone}?body=${encodeURIComponent(message)}`;
-        window.open(textUrl);
+        const businessPhone = '8326079373'; // Remove hyphens for compatibility
+        
+        // Try different SMS URI schemes for better compatibility
+        const textUrls = [
+            `sms:+1${businessPhone}?body=${encodeURIComponent(message)}`,
+            `sms:${businessPhone}?body=${encodeURIComponent(message)}`,
+            `sms:+1${businessPhone}`,
+            `tel:+1${businessPhone}`
+        ];
+
+        // Try opening each URL until one works
+        let opened = false;
+        for (const url of textUrls) {
+            try {
+                const windowRef = window.open(url, '_blank');
+                if (windowRef) {
+                    opened = true;
+                    break;
+                }
+            } catch (e) {
+                console.error('Failed to open:', url, e);
+            }
+        }
+
+        // If none of the automatic methods worked, show manual instructions
+        if (!opened) {
+            const manualInstructions = `Please send the following message to ${businessPhone}:\n\n${message}`;
+            alert(manualInstructions);
+        }
 
         // Clear cart after successful order
         localStorage.setItem('cart', '[]');
