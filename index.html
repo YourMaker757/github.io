@@ -2233,10 +2233,20 @@ function removeFromCart(itemId, selectedOption) {
     }
 }
 
+// Function to show notifications
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.className = 'fixed top-4 right-4 bg-primary text-white px-4 py-2 rounded-lg shadow-lg z-50';
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 2000);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize cart in localStorage if it doesn't exist
-    if (!localStorage.getItem('cart')) {
+    // Clear any old carts from previous sessions
+    if (!sessionStorage.getItem('cartInitialized')) {
         localStorage.setItem('cart', JSON.stringify([]));
+        sessionStorage.setItem('cartInitialized', 'true');
     }
     
     // Initial cart update
@@ -2263,7 +2273,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedOption = select.options[select.selectedIndex];
         if (!selectedOption) return 1;
         const match = selectedOption.textContent.match(/^(\d+)/);
-        return match ? parseInt(match[1]) : 1;
+        const baseQuantity = match ? parseInt(match[1]) : 1;
+        return baseQuantity;
     }
 
     // Function to submit order and send text message
@@ -2379,29 +2390,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            const selectedQuantity = getQuantityFromOption(quantitySelect);
             const product = {
                 id: productCard.dataset.productId || productCard.querySelector('h3').textContent.toLowerCase().replace(/\s+/g, '-'),
                 name: productCard.querySelector('h3').textContent,
                 price: price,
-                quantity: 1,
+                quantity: selectedQuantity,
                 selectedOption: quantitySelect.value,
                 optionText: quantitySelect.options[quantitySelect.selectedIndex].text
             };
 
             // Get current cart
-            const cart = JSON.parse(localStorage.getItem('cart'));
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
 
-            // Check if product already exists in cart with same option
-            const existingProduct = cart.find(item => 
-                item.id === product.id && 
+            // Check if product already exists in cart
+            const existingProductIndex = cart.findIndex(item =>
+                item.id === product.id &&
                 item.selectedOption === product.selectedOption
             );
 
-            if (existingProduct) {
-                existingProduct.quantity = product.quantity;
+            if (existingProductIndex !== -1) {
+                // Update existing product quantity
+                cart[existingProductIndex].quantity += product.quantity;
+                // Update the display text to show new quantity
+                cart[existingProductIndex].optionText = `${cart[existingProductIndex].quantity}x ${product.optionText}`;
             } else {
+                // Add new product to cart with quantity in display text
+                product.optionText = `${product.quantity}x ${product.optionText}`;
                 cart.push(product);
             }
+
+            // Show notification with quantity
+            showNotification(`Added ${product.quantity} ${product.name} to cart!`);
 
             // Save updated cart
             localStorage.setItem('cart', JSON.stringify(cart));
