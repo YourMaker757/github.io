@@ -198,12 +198,6 @@ background: #555;
 </div>
 <span id="phone-number" class="text-gray-700 font-medium">202-468-1513</span>
 </div>
-<button id="cart-button" class="relative bg-primary text-white p-2 rounded-full hover:bg-opacity-90 transition">
-<div class="w-6 h-6 flex items-center justify-center">
-<i class="ri-shopping-cart-2-line"></i>
-</div>
-<span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">0</span>
-</button>
 </div>
 </div>
 </div>
@@ -1862,6 +1856,12 @@ function generateOrderNumber() {
 const random = Math.floor(10000 + Math.random() * 90000);
 return `#CC71-${random}`;
 }
+// Calculate subtotal
+function calculateSubtotal() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+}
+
 // Initialize cart
 updateCartCount();
 });
@@ -2393,4 +2393,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 </body>
+</html>
 </html>
