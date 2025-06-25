@@ -2266,72 +2266,89 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to submit order and send text message
     function submitOrder() {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        if (cart.length === 0) {
-            alert('Your cart is empty!');
-            return;
+        try {
+            console.log('Starting order submission...');
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+
+            // Calculate total
+            const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            const deliveryFee = 5.00;
+            const total = subtotal + deliveryFee;
+
+            // Get customer info
+            const name = prompt('Please enter your name:');
+            if (!name) return;
+
+            const phone = prompt('Please enter your phone number:');
+            if (!phone) return;
+
+            const address = prompt('Please enter your delivery address:');
+            if (!address) return;
+
+            console.log('Customer info collected...');
+
+            // Format order details for text message
+            const orderDetails = cart.map(item => 
+                `${item.name} (${item.optionText})`
+            ).join('\n');
+
+            const orderNumber = Math.floor(Math.random() * 10000);
+            
+            const message = `New Order #${orderNumber}\n\n` +
+                `Customer: ${name}\n` +
+                `Phone: ${phone}\n` +
+                `Address: ${address}\n\n` +
+                `Items:\n${orderDetails}\n\n` +
+                `Subtotal: $${subtotal.toFixed(2)}\n` +
+                `Delivery: $${deliveryFee.toFixed(2)}\n` +
+                `Total: $${total.toFixed(2)}`;
+
+            console.log('Message formatted:', message);
+
+            // Try multiple SMS URI schemes
+            const phoneNumber = '8326079373';
+            const schemes = [
+                `sms:${phoneNumber}?body=${encodeURIComponent(message)}`,
+                `sms:+1${phoneNumber}?body=${encodeURIComponent(message)}`,
+                `sms://${phoneNumber}?body=${encodeURIComponent(message)}`,
+                `sms:${phoneNumber}`,
+                `tel:${phoneNumber}`
+            ];
+
+            let opened = false;
+            for (const scheme of schemes) {
+                try {
+                    console.log('Trying scheme:', scheme);
+                    const link = document.createElement('a');
+                    link.href = scheme;
+                    link.target = '_blank';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    opened = true;
+                    break;
+                } catch (e) {
+                    console.log('Scheme failed:', e);
+                }
+            }
+
+            // Always show the order details
+            alert(`Order Details:\n\n${message}\n\nPlease send this message to: ${phoneNumber}`);
+            
+            // Clear cart
+            localStorage.setItem('cart', '[]');
+            updateCartDisplay();
+            updateCartCount();
+            document.getElementById('cart-sidebar').classList.add('translate-x-full');
+
+        } catch (error) {
+            console.error('Error in submitOrder:', error);
+            alert('There was an error processing your order. Please try again.');
         }
-
-        // Calculate total
-        const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-        const deliveryFee = 5.00;
-        const total = subtotal + deliveryFee;
-
-        // Get customer info
-        const name = prompt('Please enter your name:');
-        if (!name) return;
-
-        const phone = prompt('Please enter your phone number:');
-        if (!phone) return;
-
-        const address = prompt('Please enter your delivery address:');
-        if (!address) return;
-
-        // Format order details for text message
-        const orderDetails = cart.map(item => 
-            `${item.name} (${item.optionText})`
-        ).join('\n');
-
-        const orderNumber = Math.floor(Math.random() * 10000);
-        
-        const message = `New Order #${orderNumber}\n\n` +
-            `Customer: ${name}\n` +
-            `Phone: ${phone}\n` +
-            `Address: ${address}\n\n` +
-            `Items:\n${orderDetails}\n\n` +
-            `Subtotal: $${subtotal.toFixed(2)}\n` +
-            `Delivery: $${deliveryFee.toFixed(2)}\n` +
-            `Total: $${total.toFixed(2)}`;
-
-        // Create a hidden form to submit the SMS
-        const form = document.createElement('form');
-        form.method = 'GET';
-        form.action = 'sms:8326079373';
-        form.target = '_blank';
-        
-        // Add the message as a hidden input
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'body';
-        input.value = message;
-        form.appendChild(input);
-        
-        // Add the form to the document and submit it
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
-        
-        // Show the order details in case SMS doesn't work
-        alert(`Order submitted! If SMS doesn't open automatically, please text this order to 832-607-9373:\n\n${message}`);
-
-        // Clear cart after successful order
-        localStorage.setItem('cart', '[]');
-        updateCartDisplay();
-        updateCartCount();
-        document.getElementById('cart-sidebar').classList.add('translate-x-full');
-
-        // Show success message
-        alert('Order submitted successfully! We will contact you shortly to confirm your delivery.');
     }
 
     // Add click listeners to all add-to-cart buttons
@@ -2475,3 +2492,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
