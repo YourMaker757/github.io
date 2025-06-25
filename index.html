@@ -2204,96 +2204,116 @@ btn.classList.add('text-gray-300');
 
 <!-- Cart Functionality Script -->
 <script>
-// Cart display update functions
-function updateCartDisplay() {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const cartItems = document.getElementById('cart-items');
-    const subtotalElement = document.getElementById('subtotal');
-    const cartCount = document.getElementById('cart-count');
-
-    if (!cartItems) return;
-
-    // Clear existing items
-    cartItems.innerHTML = '';
-    
-    let subtotal = 0;
-
-    // Add each item to the cart display
-    cart.forEach(item => {
-        const itemElement = document.createElement('div');
-        itemElement.className = 'flex justify-between items-center py-2 border-b border-gray-200';
-        itemElement.innerHTML = `
-            <div class="flex-1">
-                <h4 class="text-sm font-medium text-gray-900">${item.name}</h4>
-                <p class="text-sm text-gray-500">${item.optionText}</p>
-            </div>
-            <div class="flex items-center">
-                <span class="text-sm font-medium text-gray-900">$${(item.price * item.quantity).toFixed(2)}</span>
-                <button class="ml-4 text-red-500 hover:text-red-700" onclick="removeFromCart('${item.id}', '${item.selectedOption}')">
-                    <i class="ri-delete-bin-line"></i>
-                </button>
-            </div>
-        `;
-        cartItems.appendChild(itemElement);
-        subtotal += item.price * item.quantity;
-    });
-
-    // Update subtotal
-    if (subtotalElement) {
-        subtotalElement.textContent = `$${subtotal.toFixed(2)}`;
+    // Cart management functions
+    function initCart() {
+        if (!localStorage.getItem('cart')) {
+            localStorage.setItem('cart', '[]');
+        }
+        updateCartDisplay();
+        updateCartCount();
     }
-}
 
-function updateCartCount() {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const cartCount = document.getElementById('cart-count');
-    if (cartCount) {
-        cartCount.textContent = cart.length.toString();
-        cartCount.style.display = cart.length > 0 ? 'block' : 'none';
-    }
-}
+    function addToCart(product) {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const existingProduct = cart.find(item => 
+            item.id === product.id && 
+            item.selectedOption === product.selectedOption
+        );
 
-function removeFromCart(itemId, selectedOption) {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const itemIndex = cart.findIndex(item => item.id === itemId && item.selectedOption === selectedOption);
-    
-    if (itemIndex > -1) {
-        cart.splice(itemIndex, 1);
+        if (existingProduct) {
+            existingProduct.quantity = product.quantity;
+        } else {
+            cart.push(product);
+        }
+
         localStorage.setItem('cart', JSON.stringify(cart));
         updateCartDisplay();
         updateCartCount();
     }
-}
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Always start with a fresh cart
-    localStorage.setItem('cart', JSON.stringify([]));
-    
-    // Initial cart update
-    updateCartDisplay();
-    updateCartCount();
-
-    // Setup cart close button
-    document.getElementById('close-cart').addEventListener('click', function() {
-        document.getElementById('cart-sidebar').classList.add('translate-x-full');
-    });
-
-    // Function to get price from selected option
-    function getPriceFromOption(select) {
-        if (!select) return 0;
-        const selectedOption = select.options[select.selectedIndex];
-        if (!selectedOption) return 0;
-        const match = selectedOption.textContent.match(/\$([\d.]+)/);
-        return match ? parseFloat(match[1]) : 0;
+    function removeFromCart(itemId, selectedOption) {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const updatedCart = cart.filter(item => 
+            !(item.id === itemId && item.selectedOption === selectedOption)
+        );
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        updateCartDisplay();
+        updateCartCount();
     }
 
-    // Function to get quantity from selected option
-    function getQuantityFromOption(select) {
-        if (!select) return 1;
+    function clearCart() {
+        localStorage.setItem('cart', '[]');
+        updateCartDisplay();
+        updateCartCount();
+    }
+
+    function updateCartCount() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const count = cart.reduce((total, item) => total + item.quantity, 0);
+        const countElement = document.getElementById('cart-count');
+        if (countElement) {
+            countElement.textContent = count;
+        }
+    }
+
+    function updateCartDisplay() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const cartItems = document.getElementById('cart-items');
+        const subtotalElement = document.getElementById('subtotal');
+
+        if (!cartItems) return;
+
+        cartItems.innerHTML = '';
+        let subtotal = 0;
+
+        cart.forEach(item => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'flex justify-between items-center py-2 border-b border-gray-200';
+            itemElement.innerHTML = `
+                <div class="flex-1">
+                    <h4 class="text-sm font-medium text-gray-900">${item.name}</h4>
+                    <p class="text-sm text-gray-500">${item.optionText}</p>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-sm font-medium text-gray-900">$${(item.price * item.quantity).toFixed(2)}</span>
+                    <button class="ml-4 text-red-500 hover:text-red-700" onclick="removeFromCart('${item.id}', '${item.selectedOption}')">
+                        <i class="ri-delete-bin-line"></i>
+                    </button>
+                </div>
+            `;
+            cartItems.appendChild(itemElement);
+            subtotal += item.price * item.quantity;
+        });
+
+        if (subtotalElement) {
+            subtotalElement.textContent = `$${subtotal.toFixed(2)}`;
+        }
+    }
+    // Function to update cart display
+    function updateCartDisplay() {
+        console.log('Updating cart display...');
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        console.log('Current cart:', cart);
+        
+        const cartItems = document.getElementById('cart-items');
+        const subtotalElement = document.getElementById('subtotal');
+
+        if (!cartItems) {
+            console.log('Cart items container not found');
+            return;
+            console.log('No select element provided');
+            return 1;
+        }
         const selectedOption = select.options[select.selectedIndex];
-        if (!selectedOption) return 1;
+        if (!selectedOption) {
+            console.log('No option selected');
+            return 1;
+        }
+        console.log('Selected option text:', selectedOption.textContent);
         const match = selectedOption.textContent.match(/^(\d+)/);
-        return match ? parseInt(match[1]) : 1;
+        const quantity = match ? parseInt(match[1]) : 1;
+        console.log('Extracted quantity:', quantity);
+        return quantity;
     }
 
     // Function to submit order and send text message
@@ -2393,14 +2413,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize cart and add event listeners when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize empty cart if none exists
-        if (!localStorage.getItem('cart')) {
-            localStorage.setItem('cart', '[]');
-        }
+        // Initialize cart
+        initCart();
 
-        // Update cart display initially
-        updateCartDisplay();
-        updateCartCount();
+        // Setup cart close button
+        const closeButton = document.getElementById('close-cart');
+        if (closeButton) {
+            closeButton.addEventListener('click', function() {
+                document.getElementById('cart-sidebar').classList.add('translate-x-full');
+            });
+        }
 
         // Add click listeners to all add-to-cart buttons
         document.querySelectorAll('.add-to-cart').forEach(button => {
@@ -2414,11 +2436,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const selectedOption = quantitySelect.options[quantitySelect.selectedIndex];
                 if (!selectedOption) return;
 
-                const price = getPriceFromOption(quantitySelect);
-                const quantity = getQuantityFromOption(quantitySelect);
+                const price = parseFloat(selectedOption.textContent.match(/\$(\d+(\.\d{1,2})?)/)?.[1] || '0');
+                const quantity = parseInt(selectedOption.textContent.match(/^(\d+)/)?.[1] || '1');
 
                 if (isNaN(price) || price <= 0) {
-                    console.error('Invalid price:', quantitySelect.value);
+                    alert('Invalid price. Please select a valid option.');
                     return;
                 }
 
@@ -2431,34 +2453,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     optionText: selectedOption.textContent
                 };
 
-                console.log('Adding product to cart:', product);
+                // Add to cart
+                addToCart(product);
 
-                // Get current cart
-                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-
-                // Check if product already exists in cart with same option
-                const existingProduct = cart.find(item => 
-                    item.id === product.id && 
-                    item.selectedOption === product.selectedOption
-                );
-
-                if (existingProduct) {
-                    existingProduct.quantity = product.quantity;
-                    console.log('Updated existing product quantity:', existingProduct);
-                } else {
-                    cart.push(product);
-                    console.log('Added new product to cart');
-                }
-
-                // Save updated cart
-                localStorage.setItem('cart', JSON.stringify(cart));
-                console.log('Cart saved:', cart);
-
-                // Update cart display
-                updateCartDisplay();
-                updateCartCount();
-
-                // Show feedback to user
+                // Show feedback
                 const notification = document.createElement('div');
                 notification.textContent = 'Item added to cart!';
                 notification.className = 'fixed top-4 right-4 bg-primary text-white px-4 py-2 rounded-lg shadow-lg z-50';
@@ -2467,7 +2465,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
-});
 </script>
 
 <!-- Store Hours Script -->
