@@ -129,7 +129,7 @@ background: #555;
                 <span class="text-gray-600">Delivery Fee</span>
                 <span class="text-gray-900 font-semibold">$5.00</span>
             </div>
-            <button id="checkout-button" class="w-full bg-primary text-white py-2 px-4 rounded-button font-medium hover:bg-opacity-90 transition">Proceed to Checkout</button>
+            <button id="checkout-button" class="w-full bg-primary text-white py-2 px-4 rounded-button font-medium hover:bg-opacity-90 transition" onclick="submitOrder()">Proceed to Checkout</button>
         </div>
     </div>
 </div>
@@ -2264,6 +2264,60 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!selectedOption) return 1;
         const match = selectedOption.textContent.match(/^(\d+)/);
         return match ? parseInt(match[1]) : 1;
+    }
+
+    // Function to submit order and send text message
+    function submitOrder() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        if (cart.length === 0) {
+            alert('Your cart is empty!');
+            return;
+        }
+
+        // Calculate total
+        const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        const deliveryFee = 5.00;
+        const total = subtotal + deliveryFee;
+
+        // Get customer info
+        const name = prompt('Please enter your name:');
+        if (!name) return;
+
+        const phone = prompt('Please enter your phone number:');
+        if (!phone) return;
+
+        const address = prompt('Please enter your delivery address:');
+        if (!address) return;
+
+        // Format order details for text message
+        const orderDetails = cart.map(item => 
+            `${item.name} (${item.optionText})`
+        ).join('\n');
+
+        const orderNumber = Math.floor(Math.random() * 10000);
+        
+        const message = `New Order #${orderNumber}\n\n` +
+            `Customer: ${name}\n` +
+            `Phone: ${phone}\n` +
+            `Address: ${address}\n\n` +
+            `Items:\n${orderDetails}\n\n` +
+            `Subtotal: $${subtotal.toFixed(2)}\n` +
+            `Delivery: $${deliveryFee.toFixed(2)}\n` +
+            `Total: $${total.toFixed(2)}`;
+
+        // Send text message using the business phone number
+        const businessPhone = '202-468-1513';
+        const textUrl = `sms:${businessPhone}?body=${encodeURIComponent(message)}`;
+        window.open(textUrl);
+
+        // Clear cart after successful order
+        localStorage.setItem('cart', '[]');
+        updateCartDisplay();
+        updateCartCount();
+        document.getElementById('cart-sidebar').classList.add('translate-x-full');
+
+        // Show success message
+        alert('Order submitted successfully! We will contact you shortly to confirm your delivery.');
     }
 
     // Add click listeners to all add-to-cart buttons
