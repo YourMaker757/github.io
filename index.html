@@ -111,24 +111,31 @@ background: #555;
 from { transform: rotate(0deg); }
 to { transform: rotate(360deg); }
 }
+
+@keyframes sparkle {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
 .animate-spin-slow {
 animation: spin-slow 4s linear infinite;
 }
 
-.star-1 {
-animation: twinkle 2s infinite;
+.leaf-1 {
+animation: sparkle 2s infinite;
 top: 20%;
 left: 15%;
 }
-.star-2 {
-animation: twinkle 2s infinite 0.5s;
+.leaf-2 {
+animation: sparkle 2s infinite 0.5s;
 top: 50%;
 left: 45%;
 }
-.star-3 {
-animation: twinkle 2s infinite 1s;
+.leaf-3 {
+animation: sparkle 2s infinite 1s;
 top: 30%;
-left: 75%;
+left: 65%;
 }
 .product-card:hover {
 transform: translateY(-5px);
@@ -263,25 +270,25 @@ background: #555;
 </div>
 </header>
 <!-- 4th of July Banner -->
-<div class="relative overflow-hidden bg-gradient-to-r from-red-600 via-white to-blue-600">
+<div class="relative overflow-hidden bg-gradient-to-r from-yellow-500 via-red-500 to-green-500">
 <div class="container mx-auto px-4 py-4">
 <div class="flex items-center justify-between">
 <div class="flex-1 min-w-0">
 <div class="flex items-center">
 <div class="w-12 h-12 flex items-center justify-center text-white animate-spin-slow">
-<i class="ri-star-fill ri-2x"></i>
+<i class="ri-cannabis-line ri-2x"></i>
 </div>
 <div class="ml-4">
-<h3 class="text-2xl font-bold text-white">4th of July Special!</h3>
-<p class="text-white/90">$222 Deal on Tyson Carts July 4 10am-4pm est pickup only & $10 off all Oz July 2-5<span class="font-bold">4th Deals</span></p>
+<h3 class="text-2xl font-bold text-white">Live Resin/Concentrates Deal!</h3>
+<p class="text-white/90">$111 1 oz of Live Resin/Concentrates!<span class="font-bold">Deals</span></p>
 </div>
 </div>
 </div>
 <div class="flex items-center gap-6">
 <div class="hidden md:block">
-<img src="https://res.cloudinary.com/dvxmvlykb/image/upload/v1751344739/IMG_20250701_003547_115_lxqvoy_c_pad_w_120_h_120_qne0gp.jpg" alt="4th of July Special" class="w-24 h-24 object-cover rounded-lg shadow-lg">
+<img src="https://res.cloudinary.com/dvxmvlykb/image/upload/v1751939226/IMG_20250620_205137_416_mna8j0_l3pck7_c_fill_w_120_h_120_kw9pk6.jpg" alt="Live Resin/Concentrates Deal!" class="w-24 h-24 object-cover rounded-lg shadow-lg">
 </div>
-<button class="bg-white text-blue-600 px-6 py-2 rounded-button font-medium hover:bg-opacity-90 transition whitespace-nowrap">
+<button class="bg-red-600 text-white px-6 py-2 rounded-button font-medium hover:bg-red-700 transition whitespace-nowrap">
 Shop Now
 </button>
 </div>
