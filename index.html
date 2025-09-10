@@ -2850,18 +2850,20 @@ document.addEventListener('DOMContentLoaded', function() {
     checkStoreHours();
 });
 <script>
-// Image Zoom Functionality
-document.addEventListener('DOMContentLoaded', function() {
+// Wait for the entire page to load
+window.addEventListener('load', function() {
     const modal = document.getElementById('image-modal');
     const modalImg = document.getElementById('modal-image');
     const closeModal = document.getElementById('close-modal');
     let isZoomed = false;
 
+    console.log('Modal elements:', {modal, modalImg, closeModal}); // Debug log
+
     // Close button handler
-    closeModal.addEventListener('click', function() {
-        modal.classList.add('hidden');
+    closeModal?.addEventListener('click', function() {
+        modal?.classList.add('hidden');
         document.body.style.overflow = '';
-        modalImg.style.transform = 'scale(1)';
+        modalImg?.style.setProperty('transform', 'scale(1)');
         isZoomed = false;
     });
 
@@ -2873,9 +2875,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const highResImg = new Image();
             highResImg.onload = function() {
                 modalImg.src = this.src;
-                modalImg.style.transform = 'scale(1)';
+                modalImg.style.setProperty('transform', 'scale(1)');
                 isZoomed = false;
-                modal.classList.remove('hidden');
+                modal?.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
             };
             highResImg.src = this.src;
@@ -2883,36 +2885,36 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Toggle zoom on image click
-    modalImg.addEventListener('click', function(e) {
+    modalImg?.addEventListener('click', function(e) {
         e.stopPropagation();
         isZoomed = !isZoomed;
         
         if (isZoomed) {
-            this.style.transformOrigin = 'center center';
-            this.style.transform = 'scale(2)';
+            this.style.setProperty('transform-origin', 'center center');
+            this.style.setProperty('transform', 'scale(2)');
             this.style.cursor = 'zoom-out';
         } else {
-            this.style.transform = 'scale(1)';
+            this.style.setProperty('transform', 'scale(1)');
             this.style.cursor = 'zoom-in';
         }
     });
 
     // Close modal when clicking outside
-    modal.addEventListener('click', function(e) {
+    modal?.addEventListener('click', function(e) {
         if (e.target === this) {
             this.classList.add('hidden');
             document.body.style.overflow = '';
-            modalImg.style.transform = 'scale(1)';
+            modalImg?.style.setProperty('transform', 'scale(1)');
             isZoomed = false;
         }
     });
 
     // Close with Escape key
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+        if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
             modal.classList.add('hidden');
             document.body.style.overflow = '';
-            modalImg.style.transform = 'scale(1)';
+            modalImg?.style.setProperty('transform', 'scale(1)');
             isZoomed = false;
         }
     });
